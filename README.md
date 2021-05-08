@@ -10,5 +10,6 @@ https://ddmmddmm.github.io/smartTool/mysql_helper.html
 
 - mysql where in 条件分组成UNION ALL
 
+![image](https://github.com/ddmmddmm/smartTool/blob/master/demo.gif)
 
 
