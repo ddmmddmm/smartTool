@@ -2,29 +2,90 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>MYSQL_WHERE_IN_去掉换行符(列转行)</title>
+    <title>MYSQL条件列转行</title>
     <style type="text/css">
-        .conditionText {
-            width: 1000px;
-            height: 500px;
-        }
-
-        #btn {
-            height: 50px;
-            display: block;
-            margin-top: 10px;
-            width: 1000px;
-        }
-
         p {
             margin: 0;
             padding: 0
         }
 
+        .myTitle {
+            width: 800px;
+            text-align: center;
+            margin: 15px 0;
+            letter-spacing: 2px;
+            font-size: 22px;
+        }
+
+        .conditionText {
+            width: 800px;
+            height: 500px;
+            resize: none;
+        }
+
+        /*按钮*/
+        .myBtn {
+            height: 50px;
+            display: block;
+            margin-top: 10px;
+            width: 810px;
+            outline: none;
+            border: none;
+            z-index: 1;
+            position: relative;
+            color: white;
+            background: #40a9ff;
+            letter-spacing: 2px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 5px;
+        }
+
+        .myBtn::before {
+            content: "";
+            z-index: -1;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fa541c;
+            transform-origin: center bottom;
+            transform: scaleY(0);
+            transition: transform 0.4s ease-in-out;
+        }
+
+        .myBtn:hover {
+            cursor: pointer;
+        }
+
+        .myBtn:hover::before {
+            transform-origin: center top;
+            transform: scaleY(1);
+        }
+
+        .myCheckBox {
+            display: flex;
+            align-items: center;
+        }
+
+        .myCheckBox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .myCheckBox label {
+            user-select: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 3px;
+        }
+
         #tips {
             font-size: 12px;
             color: #999;
-            margin: 10px 0;
+            margin-top: 10px;
+            margin-bottom: 5px;
         }
 
         #result {
@@ -44,7 +105,7 @@
 
         #result .rsWrap .copyBtn {
             font-size: 14px;
-            color: #333;
+            color: #fff;
             width: 60px;
             height: 30px;
             display: inline-block;
@@ -88,33 +149,62 @@
             margin-bottom: 10px;
         }
 
+        #aboutText {
+            cursor: pointer;
+            color: blue;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        #aboutContent {
+            width: 800px;
+            background: #f9f9f9;
+            padding: 30px 0 0 30px;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 30px;
+        }
+
+        #aboutContent .ac_wrap {
+        }
+
+        #aboutContent .ac_wrap .ac_title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        #aboutContent .ac_wrap .ac_content {
+            line-height: 26px;
+            font-size: 16px;
+            padding-bottom: 16px;
+        }
+
+        .hide {
+            display: none
+        }
     </style>
 </head>
 <body>
 <div id="container">
-    <h3>MYSQL_WHERE_IN_去掉换行符(列转行)</h3>
-    <textarea class="conditionText" placeholder="源数据为列类型
+    <div class="myTitle">MYSQL条件列转行</div>
+    <textarea class="conditionText" placeholder="使用示例：
+1.在navicat中整列复制出id列
 如
-106873O19050704439680
-106873O19050889570315
-106873O19051061114684
-106873O19051061116360
-106873O19051061118893
-106873O19051138701262
-106873O19051138702715
-106873O19051138704386
-106873O19051138705671
+111
+222
+333
 
-转换之后为
-106873O19050704439680,106873O19050889570315,106873O19051061114684,106873O19051061116360,106873O19051061118893,106873O19051138701262,106873O19051138702715,106873O19051138704386,106873O19051138705671
+2.贴上该输入框，转换之后为：
+'111','222','333'
 
-勾选字符串类型,转换之后为
-'106873O19050704439680','106873O19050889570315','106873O19051061114684','106873O19051061116360','106873O19051061118893','106873O19051138701262','106873O19051138702715','106873O19051138704386','106873O19051138705671'
+3.点击复制，在查询时用于 WHERE IN 条件
+SELECT * FROM xxx WHERE id IN ('111','222','333');
 " id="input"></textarea>
     <br>
-    <div><input id="isStr" type="checkbox" checked='checked'>字符串类型</div>
-    <div><input id="isUnique" type="checkbox">去重</div>
-    <div><input id="isMagic" type="checkbox">魔法</div>
+    <div class="myCheckBox"><input id="isStr" type="checkbox" checked='checked'><label for="isStr">字符串类型</label></div>
+    <div class="myCheckBox"><input id="isUnique" type="checkbox"><label for="isUnique">数据去重</label></div>
+    <div style="display: none"><input id="isMagic" type="checkbox">魔法</div>
     <div class="magicBox none" id="magicBox">
         <div id="magicTitle"><b>魔法</b>：根据指定的前缀后缀按指定分组数转换为多个UNION ALL字句(当WHERE IN过多时MYSQL会走全表扫描，这种方式某些情况下可以规避全表扫描)
             <br>
@@ -136,11 +226,33 @@
             <option value="10000">10000条</option>
         </select>
     </div>
-    <button id="btn">转</button>
+    <button id="btn" class="myBtn">转换</button>
     <div id="tips">
-        <p>1.会自动过滤头尾空格，点击'转'按钮后结果出现在下方，请三击鼠标左键全选整行</p>
-        <p>2.去重：去除重复元素</p>
-        <p>3.字符串类型: 元素前尾会加上单引号</p>
+        <p>1.会自动过滤头尾空格，点击'转换'按钮后结果出现在下方，点击复制可以复制</p>
+        <p>2.字符串类型: 元素前尾会加上单引号</p>
+        <p>3.数据去重：去除重复元素</p>
+    </div>
+    <div id="aboutText">关于我们</div>
+    <div id="aboutContent" style="display: none">
+        <div class="ac_wrap">
+            <div class="ac_title">github</div>
+            <div class="ac_content"><a href="https://github.com/ddmmddmm/smartTool" target="_blank">https://github.com/ddmmddmm/smartTool</a>
+            </div>
+        </div>
+        <div class="ac_wrap">
+            <div class="ac_title">迭代历史</div>
+            <div class="ac_content">
+                <p>1. 2019-08-06 第一版新增</p>
+                <p>2. 2021-05-08 新增复制功能</p>
+                <p>3. 2021-09-30 样式优化、新增展开功能</p>
+            </div>
+        </div>
+        <div class="ac_wrap">
+            <div class="ac_title">贡献成员</div>
+            <div class="ac_content">
+                ddmm、eva
+            </div>
+        </div>
     </div>
     <div id="result"></div>
 </div>
@@ -161,6 +273,7 @@
      * 2019/11/21
      */
     document.getElementById("btn").addEventListener('click', handler);
+    document.getElementById("aboutText").addEventListener('click', aboutTextHandler);
     document.getElementById("isMagic").addEventListener('change', onIsMagicChangeHandler);
 
     // dom
@@ -169,6 +282,7 @@
     let isUniqueDom = document.getElementById('isUnique');
     let isMagicDom = document.getElementById('isMagic');
     let resultDom = document.getElementById('result');
+    let aboutContentDom = document.getElementById('aboutContent');
     let containerDom = document.getElementById('container');
     let magicBoxDom = document.getElementById('magicBox');
     let magicPrefixDom = document.getElementById('magicPrefix');
@@ -178,7 +292,7 @@
 
     // 复制功能 https://segmentfault.com/a/1190000020651289
     let clipboard = new ClipboardJS('.copyBtn', {
-        text: function(trigger) {
+        text: function (trigger) {
             return trigger.parentNode.parentNode.querySelector('.rsContent').innerText;
         }
     });
@@ -186,22 +300,28 @@
         console.info('Action:', e.action,'|Text:', e.text,'|Trigger:', e.trigger);
         e.clearSelection();
     });*/
-    clipboard.on('error', function(e) {
+    clipboard.on('error', function (e) {
         console.error('Action:', e.action);
         console.error('Trigger:', e.trigger);
         err('复制失败');
     });
 
     // 按键监听
-    document.onkeydown=function(event){
+    document.onkeydown = function (event) {
         var e = event || window.event || arguments.callee.caller.arguments[0];
         // 按ctrl + v
         if (e.keyCode === 86 && e.ctrlKey) {
-            setTimeout(function(){
+            setTimeout(function () {
                 handler();
-            },100);
+            }, 100);
         }
     };
+
+    // 关于我们
+    function aboutTextHandler(){
+        aboutContentDom.style.display = 'none' === aboutContentDom.style.display ? "block" : "none";
+        scrollToBottom(containerDom);
+    }
 
     // 转换处理
     function handler() {
@@ -303,11 +423,11 @@
         let isUniqueDesc = isUnique ? '[去重]' : '[不去重]';
         let timeDesc = '[' + getNow() + ']';
         let lenDesc = '数据总条数：' + len;
-        let groupDesc = isMagic ? '共' + Math.ceil(len / magicNum)  + '组': '';
+        let groupDesc = isMagic ? '共' + Math.ceil(len / magicNum) + '组' : '';
         let html = `<div class="rsWrap">
                         <div>
                             <div class="rsLen">${timeDesc} ${isStrDesc} ${isUniqueDesc} ${lenDesc} ${groupDesc}</div>
-                            <button class="copyBtn">复制</button>
+                            <button class="copyBtn myBtn">复制</button>
                         </div>
                         <p class="rsContent">${content}</p>
                     </div>`;
