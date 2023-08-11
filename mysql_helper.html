@@ -153,9 +153,26 @@
             width: 50px;
             text-align: center;
         }
+
+        /* CSS 样式 */
+        .toast {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
+<div class="toast" id="toast"></div>
+
 <div id="container">
     <div class="myTitle">MYSQL条件列转行</div>
     <textarea class="conditionText" placeholder="使用示例：
@@ -202,6 +219,7 @@ SELECT * FROM xxx WHERE id IN ('111','222','333');
                 <p>4. 2022-01-20 更新按钮hover、支持mac版粘贴快捷键判断</p>
                 <p>5. 2022-05-25 新增双引号、返回数组选项</p>
                 <p>6. 2023-08-10 新增切割数量，支持切割结果集返回多条</p>
+                <p>7. 2023-08-11 新增复制的反馈</p>
             </div>
         </div>
         <div class="ac_wrap">
@@ -248,10 +266,12 @@ SELECT * FROM xxx WHERE id IN ('111','222','333');
             return trigger.parentNode.parentNode.querySelector('.rsContent').innerText;
         }
     });
-    /*clipboard.on('success', function(e) {
+    clipboard.on('success', function(e) {
         console.info('Action:', e.action,'|Text:', e.text,'|Trigger:', e.trigger);
+        e.trigger.parentNode.parentNode.style.backgroundColor = '#f1f0ff';
+        showToast('已复制', 1500);
         e.clearSelection();
-    });*/
+    });
     clipboard.on('error', function (e) {
         console.error('Action:', e.action);
         console.error('Trigger:', e.trigger);
@@ -427,6 +447,18 @@ SELECT * FROM xxx WHERE id IN ('111','222','333');
         }
 
         return result;
+    }
+
+    // JavaScript 代码
+    function showToast(message, duration) {
+        const toastElement = document.getElementById('toast');
+
+        toastElement.textContent = message;
+        toastElement.style.display = 'block';
+
+        setTimeout(function() {
+            toastElement.style.display = 'none';
+        }, duration);
     }
 </script>
 </body>
