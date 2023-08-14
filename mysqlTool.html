@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>MYSQL条件列转行</title>
+    <style type="text/css">
+        p {
+            margin: 0;
+            padding: 0
+        }
+
+        .conditionText {
+            width: 100%;
+            max-width: 780px;
+            height: 300px;
+            resize: none;
+        }
+
+        .conditionText::placeholder {
+            font-size: 16px;
+        }
+
+        /*按钮*/
+        .myBtn {
+            height: 50px;
+            display: block;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 780px;
+            outline: none;
+            border: none;
+            z-index: 1;
+            position: relative;
+            background: #40a9ff;
+            color: white;
+            letter-spacing: 2px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 5px;
+        }
+
+        .myBtn:hover {
+            cursor: pointer;
+        }
+
+        .myBtn:active {
+            background: #2e6fa5;
+            color: white;
+        }
+
+        .checkboxContainer {
+            display: flex; /* 将容器内元素排成一行 */
+        }
+
+        .myCheckBox {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            margin-right: 5px; /* 添加间距 */
+            padding: 3px; /* 添加内边距来突出显示 */
+            border: 1px solid #ccc; /* 添加边框 */
+            border-radius: 5px; /* 可选：添加边框圆角 */
+            background-color: #f9f9f9; /* 添加背景色 */
+        }
+
+        .myCheckBox:last-child {
+            margin-right: 0; /* 最后一个复选框不需要右侧间距 */
+        }
+
+        .myCheckBox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .myCheckBox label {
+            user-select: none;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 3px;
+        }
+
+        #tips {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        #result {
+        }
+
+        #result .rsWrap {
+            margin: 10px 0;
+            background: aliceblue;
+        }
+
+        #result .rsWrap .rsLen {
+            padding: 10px 0;
+            font-size: 14px;
+            color: #999;
+            display: inline-block;
+        }
+
+        #result .rsWrap .copyBtn {
+            font-size: 14px;
+            color: #fff;
+            width: 60px;
+            height: 30px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        #result .rsWrap .rsContent {
+            white-space: nowrap;
+            padding-bottom: 10px;
+            font-size: 16px;
+            color: #000;
+        }
+
+        .none {
+            display: none
+        }
+
+        #aboutContent {
+            width: 800px;
+            background: #f9f9f9;
+            padding: 30px 0 0 30px;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 30px;
+        }
+
+        #aboutContent .ac_wrap {
+        }
+
+        #aboutContent .ac_wrap .ac_title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        #aboutContent .ac_wrap .ac_content {
+            line-height: 26px;
+            font-size: 16px;
+            padding-bottom: 16px;
+        }
+
+        #result .rsBatch {
+            color: #FF9800;
+            font-weight: 700;
+        }
+
+        .hide {
+            display: none
+        }
+
+        #numericInput {
+            width: 50px;
+            text-align: center;
+        }
+
+        /* CSS 样式 */
+        .toast {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div id="container">
+    <textarea class="conditionText" placeholder="使用示例：
+1.在navicat中整列复制出id列
+如
+111
+222
+333
+
+2.贴上该输入框，转换之后为：
+'111','222','333'
+
+3.点击复制，在查询时用于 WHERE IN 条件
+SELECT * FROM xxx WHERE id IN ('111','222','333');
+" id="input"></textarea>
+    <br>
+    <div class="checkboxContainer">
+        <div class="myCheckBox"><input id="isStr" type="checkbox" checked='checked'><label for="isStr">字符串类型</label>
+        </div>
+        <div class="myCheckBox"><input id="isDqm" type="checkbox"><label for="isDqm">双引号</label></div>
+        <div class="myCheckBox"><input id="isArr" type="checkbox"><label for="isArr">返回数组</label></div>
+        <div class="myCheckBox"><input id="isUnique" type="checkbox"><label for="isUnique">数据去重</label></div>
+        <div class="myCheckBox">切割成<input type="number" id="numericInput" value="1" min="0">条</div>
+    </div>
+    <button id="btn" class="myBtn">转换</button>
+    <div id="result"></div>
+</div>
+<script>/*!
+ * clipboard.js v2.0.8
+ * https://clipboardjs.com/
+ *
+ * Licensed MIT © Zeno Rocha
+ */
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.ClipboardJS=e():t.ClipboardJS=e()}(this,function(){return n={134:function(t,e,n){"use strict";n.d(e,{default:function(){return r}});var e=n(279),i=n.n(e),e=n(370),a=n.n(e),e=n(817),o=n.n(e);function c(t){return(c="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function u(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}var l=function(){function e(t){!function(t){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this),this.resolveOptions(t),this.initSelection()}var t,n,r;return t=e,(n=[{key:"resolveOptions",value:function(){var t=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{};this.action=t.action,this.container=t.container,this.emitter=t.emitter,this.target=t.target,this.text=t.text,this.trigger=t.trigger,this.selectedText=""}},{key:"initSelection",value:function(){this.text?this.selectFake():this.target&&this.selectTarget()}},{key:"createFakeElement",value:function(){var t="rtl"===document.documentElement.getAttribute("dir");this.fakeElem=document.createElement("textarea"),this.fakeElem.style.fontSize="12pt",this.fakeElem.style.border="0",this.fakeElem.style.padding="0",this.fakeElem.style.margin="0",this.fakeElem.style.position="absolute",this.fakeElem.style[t?"right":"left"]="-9999px";t=window.pageYOffset||document.documentElement.scrollTop;return this.fakeElem.style.top="".concat(t,"px"),this.fakeElem.setAttribute("readonly",""),this.fakeElem.value=this.text,this.fakeElem}},{key:"selectFake",value:function(){var t=this,e=this.createFakeElement();this.fakeHandlerCallback=function(){return t.removeFake()},this.fakeHandler=this.container.addEventListener("click",this.fakeHandlerCallback)||!0,this.container.appendChild(e),this.selectedText=o()(e),this.copyText(),this.removeFake()}},{key:"removeFake",value:function(){this.fakeHandler&&(this.container.removeEventListener("click",this.fakeHandlerCallback),this.fakeHandler=null,this.fakeHandlerCallback=null),this.fakeElem&&(this.container.removeChild(this.fakeElem),this.fakeElem=null)}},{key:"selectTarget",value:function(){this.selectedText=o()(this.target),this.copyText()}},{key:"copyText",value:function(){var e;try{e=document.execCommand(this.action)}catch(t){e=!1}this.handleResult(e)}},{key:"handleResult",value:function(t){this.emitter.emit(t?"success":"error",{action:this.action,text:this.selectedText,trigger:this.trigger,clearSelection:this.clearSelection.bind(this)})}},{key:"clearSelection",value:function(){this.trigger&&this.trigger.focus(),document.activeElement.blur(),window.getSelection().removeAllRanges()}},{key:"destroy",value:function(){this.removeFake()}},{key:"action",set:function(){var t=0<arguments.length&&void 0!==arguments[0]?arguments[0]:"copy";if(this._action=t,"copy"!==this._action&&"cut"!==this._action)throw new Error('Invalid "action" value, use either "copy" or "cut"')},get:function(){return this._action}},{key:"target",set:function(t){if(void 0!==t){if(!t||"object"!==c(t)||1!==t.nodeType)throw new Error('Invalid "target" value, use a valid Element');if("copy"===this.action&&t.hasAttribute("disabled"))throw new Error('Invalid "target" attribute. Please use "readonly" instead of "disabled" attribute');if("cut"===this.action&&(t.hasAttribute("readonly")||t.hasAttribute("disabled")))throw new Error('Invalid "target" attribute. You can\'t cut text from elements with "readonly" or "disabled" attributes');this._target=t}},get:function(){return this._target}}])&&u(t.prototype,n),r&&u(t,r),e}();function s(t){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function f(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}function h(t,e){return(h=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}function d(n){var r=function(){if("undefined"==typeof Reflect||!Reflect.construct)return!1;if(Reflect.construct.sham)return!1;if("function"==typeof Proxy)return!0;try{return Date.prototype.toString.call(Reflect.construct(Date,[],function(){})),!0}catch(t){return!1}}();return function(){var t,e=p(n);return t=r?(t=p(this).constructor,Reflect.construct(e,arguments,t)):e.apply(this,arguments),e=this,!(t=t)||"object"!==s(t)&&"function"!=typeof t?function(t){if(void 0!==t)return t;throw new ReferenceError("this hasn't been initialised - super() hasn't been called")}(e):t}}function p(t){return(p=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function y(t,e){t="data-clipboard-".concat(t);if(e.hasAttribute(t))return e.getAttribute(t)}var r=function(){!function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&h(t,e)}(o,i());var t,e,n,r=d(o);function o(t,e){var n;return function(t){if(!(t instanceof o))throw new TypeError("Cannot call a class as a function")}(this),(n=r.call(this)).resolveOptions(e),n.listenClick(t),n}return t=o,n=[{key:"isSupported",value:function(){var t=0<arguments.length&&void 0!==arguments[0]?arguments[0]:["copy","cut"],t="string"==typeof t?[t]:t,e=!!document.queryCommandSupported;return t.forEach(function(t){e=e&&!!document.queryCommandSupported(t)}),e}}],(e=[{key:"resolveOptions",value:function(){var t=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{};this.action="function"==typeof t.action?t.action:this.defaultAction,this.target="function"==typeof t.target?t.target:this.defaultTarget,this.text="function"==typeof t.text?t.text:this.defaultText,this.container="object"===s(t.container)?t.container:document.body}},{key:"listenClick",value:function(t){var e=this;this.listener=a()(t,"click",function(t){return e.onClick(t)})}},{key:"onClick",value:function(t){t=t.delegateTarget||t.currentTarget;this.clipboardAction&&(this.clipboardAction=null),this.clipboardAction=new l({action:this.action(t),target:this.target(t),text:this.text(t),container:this.container,trigger:t,emitter:this})}},{key:"defaultAction",value:function(t){return y("action",t)}},{key:"defaultTarget",value:function(t){t=y("target",t);if(t)return document.querySelector(t)}},{key:"defaultText",value:function(t){return y("text",t)}},{key:"destroy",value:function(){this.listener.destroy(),this.clipboardAction&&(this.clipboardAction.destroy(),this.clipboardAction=null)}}])&&f(t.prototype,e),n&&f(t,n),o}()},828:function(t){var e;"undefined"==typeof Element||Element.prototype.matches||((e=Element.prototype).matches=e.matchesSelector||e.mozMatchesSelector||e.msMatchesSelector||e.oMatchesSelector||e.webkitMatchesSelector),t.exports=function(t,e){for(;t&&9!==t.nodeType;){if("function"==typeof t.matches&&t.matches(e))return t;t=t.parentNode}}},438:function(t,e,n){var a=n(828);function i(t,e,n,r,o){var i=function(e,n,t,r){return function(t){t.delegateTarget=a(t.target,n),t.delegateTarget&&r.call(e,t)}}.apply(this,arguments);return t.addEventListener(n,i,o),{destroy:function(){t.removeEventListener(n,i,o)}}}t.exports=function(t,e,n,r,o){return"function"==typeof t.addEventListener?i.apply(null,arguments):"function"==typeof n?i.bind(null,document).apply(null,arguments):("string"==typeof t&&(t=document.querySelectorAll(t)),Array.prototype.map.call(t,function(t){return i(t,e,n,r,o)}))}},879:function(t,n){n.node=function(t){return void 0!==t&&t instanceof HTMLElement&&1===t.nodeType},n.nodeList=function(t){var e=Object.prototype.toString.call(t);return void 0!==t&&("[object NodeList]"===e||"[object HTMLCollection]"===e)&&"length"in t&&(0===t.length||n.node(t[0]))},n.string=function(t){return"string"==typeof t||t instanceof String},n.fn=function(t){return"[object Function]"===Object.prototype.toString.call(t)}},370:function(t,e,n){var l=n(879),s=n(438);t.exports=function(t,e,n){if(!t&&!e&&!n)throw new Error("Missing required arguments");if(!l.string(e))throw new TypeError("Second argument must be a String");if(!l.fn(n))throw new TypeError("Third argument must be a Function");if(l.node(t))return c=e,u=n,(a=t).addEventListener(c,u),{destroy:function(){a.removeEventListener(c,u)}};if(l.nodeList(t))return r=t,o=e,i=n,Array.prototype.forEach.call(r,function(t){t.addEventListener(o,i)}),{destroy:function(){Array.prototype.forEach.call(r,function(t){t.removeEventListener(o,i)})}};if(l.string(t))return t=t,e=e,n=n,s(document.body,t,e,n);throw new TypeError("First argument must be a String, HTMLElement, HTMLCollection, or NodeList");var r,o,i,a,c,u}},817:function(t){t.exports=function(t){var e,n="SELECT"===t.nodeName?(t.focus(),t.value):"INPUT"===t.nodeName||"TEXTAREA"===t.nodeName?((e=t.hasAttribute("readonly"))||t.setAttribute("readonly",""),t.select(),t.setSelectionRange(0,t.value.length),e||t.removeAttribute("readonly"),t.value):(t.hasAttribute("contenteditable")&&t.focus(),n=window.getSelection(),(e=document.createRange()).selectNodeContents(t),n.removeAllRanges(),n.addRange(e),n.toString());return n}},279:function(t){function e(){}e.prototype={on:function(t,e,n){var r=this.e||(this.e={});return(r[t]||(r[t]=[])).push({fn:e,ctx:n}),this},once:function(t,e,n){var r=this;function o(){r.off(t,o),e.apply(n,arguments)}return o._=e,this.on(t,o,n)},emit:function(t){for(var e=[].slice.call(arguments,1),n=((this.e||(this.e={}))[t]||[]).slice(),r=0,o=n.length;r<o;r++)n[r].fn.apply(n[r].ctx,e);return this},off:function(t,e){var n=this.e||(this.e={}),r=n[t],o=[];if(r&&e)for(var i=0,a=r.length;i<a;i++)r[i].fn!==e&&r[i].fn._!==e&&o.push(r[i]);return o.length?n[t]=o:delete n[t],this}},t.exports=e,t.exports.TinyEmitter=e}},o={},r.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return r.d(e,{a:e}),e},r.d=function(t,e){for(var n in e)r.o(e,n)&&!r.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:e[n]})},r.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},r(134).default;function r(t){if(o[t])return o[t].exports;var e=o[t]={exports:{}};return n[t](e,e.exports,r),e.exports}var n,o});
+</script>
+<script type="text/javascript">
+    /**
+     * MYSQL_WHERE_IN_去掉换行符(列转行)
+     * by lzs
+     * 2019/11/21
+     */
+
+    let inputDom;
+    let isStrDom;
+    let isDqmDom;
+    let isArrDom;
+    let isUniqueDom;
+    let resultDom;
+    let aboutContentDom;
+    let containerDom;
+    let numericInputDom;
+    let conditionTextDom;
+    let btnDom;
+
+    function init() {
+        inputDom = window.document.getElementById('input');
+        isStrDom = window.document.getElementById('isStr');
+        isDqmDom = window.document.getElementById('isDqm');
+        isArrDom = window.document.getElementById('isArr');
+        isUniqueDom = window.document.getElementById('isUnique');
+        resultDom = window.document.getElementById('result');
+        aboutContentDom = window.document.getElementById('aboutContent');
+        containerDom = window.document.getElementById('container');
+        numericInputDom = window.document.getElementById("numericInput");
+        conditionTextDom = window.document.querySelector('.conditionText');
+        btnDom = window.document.getElementById("btn");
+        btnDom.addEventListener('click', handler);
+
+        // 按键监听
+        window.document.onkeydown = function (event) {
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            // 按ctrl + v
+            if ((e.keyCode === 86 && e.ctrlKey) || (e.keyCode === 86 && e.metaKey)) {
+                setTimeout(function () {
+                    handler();
+                }, 100);
+            }
+        };
+    }
+
+    if (typeof utools !== 'undefined') {
+        utools.onPluginEnter(({code, type, payload, option}) => {
+            console.log('用户进入插件应用', code, type, payload)
+            init();
+        })
+    } else {
+        init();
+    }
+
+    let batchNum = 1;
+
+    // 复制功能 https://segmentfault.com/a/1190000020651289
+    let clipboard = new ClipboardJS('.copyBtn', {
+        text: function (trigger) {
+            return trigger.parentNode.parentNode.querySelector('.rsContent').innerText;
+        }
+    });
+    clipboard.on('success', function (e) {
+        console.info('Action:', e.action, '|Text:', e.text, '|Trigger:', e.trigger);
+        e.trigger.parentNode.parentNode.style.backgroundColor = '#f1f0ff';
+        showToast('已复制', 1500);
+        e.clearSelection();
+    });
+    clipboard.on('error', function (e) {
+        console.error('Action:', e.action);
+        console.error('Trigger:', e.trigger);
+        err('复制失败');
+    });
+
+    // 转换处理
+    function handler() {
+        try {
+            let val = inputDom.value;
+            let isStr = isStrDom.checked;
+            let isDqm = isDqmDom.checked;
+            let isArr = isArrDom.checked;
+            let isUnique = isUniqueDom.checked;
+            let numberOfChunks = numericInputDom.value;
+
+            // 去掉首尾空格
+            val = val ? val.trim() : '';
+
+            if (!val) {
+                showToast('请输入内容', 1500);
+                return;
+            }
+
+            // 分割换行符
+            let regexp = /[\r\n]/g;
+            let arr = val.split(regexp);
+            arr = isUnique ? unique(arr) : arr;
+            let arrLength = arr.length;
+
+            let arrChunks = [arr];
+
+            // 切割数量大于1才触发数据分组
+            if (numberOfChunks > 1) {
+                if (numberOfChunks > arrLength) {
+                    err("分组数量不能大于数据条数，当前数据条数：" + arrLength + "，分组数量：" + numberOfChunks);
+                    return;
+                }
+
+                arrChunks = chunkArray(arr, numberOfChunks);
+            }
+
+            let smallBatchNum = 1;
+            let hasMoreArr = arrChunks.length > 1;
+            arrChunks.forEach(arrItem => {
+                let result = concatSpa(arrItem, isStr, isDqm, isArr);
+                appendHTML(resultDom, batchNum, smallBatchNum++, hasMoreArr, arrItem.length, result, isStr, isDqm, isArr, isUnique);
+                console.log(arrItem);
+            });
+            batchNum++;
+        } catch (e) {
+            err(e);
+        }
+    }
+
+    // 错误输出
+    function err(str) {
+        alert(str);
+    }
+
+    // 获取spa
+    function getSpa(isStr, isDqm) {
+        let qm = isDqm ? '"' : "'";
+        return isStr ? qm + "," + qm : ",";
+    }
+
+    // 数组拼接逗号
+    function concatSpa(arr, isStr, isDqm, isArr) {
+        if (arr.length <= 0) {
+            return '';
+        }
+        let result = arr.join(getSpa(isStr, isDqm));
+
+        if (isStr) {
+            let qm = isDqm ? '"' : "'";
+            result = qm + result + qm;
+        }
+
+        if (isArr) {
+            result = "[" + result + "]";
+        }
+        return result;
+    }
+
+    // 显示HTML到页面
+    function appendHTML(dom, showBatchNum, showBatchSmallNum, hasMoreArr, len, content, isStr, isDqm, isArr, isUnique) {
+        let isStrDesc = isStr ? '[字符串类型]' : '[非字符串类型]';
+        let isDqmDesc = isDqm ? '[双引号]' : '[单引号]';
+        let isArrDesc = isArr ? '[数组]' : '[非数组]';
+        let isUniqueDesc = isUnique ? '[去重]' : '[不去重]';
+        let timeDesc = '[' + getNow() + ']';
+        let lenDesc = '数据总条数：' + len;
+        let showBatchSmallNumDesc = hasMoreArr ? "-" + showBatchSmallNum : "";
+        let html = `<div class="rsWrap">
+                        <div>
+                            <div class="rsLen"><span class="rsBatch">操作批次${showBatchNum}${showBatchSmallNumDesc}</span> ${timeDesc} ${isStrDesc} ${isDqmDesc} ${isArrDesc} ${isUniqueDesc} ${lenDesc}</div>
+                            <button class="copyBtn myBtn">复制</button>
+                        </div>
+                        <p class="rsContent">${content}</p>
+                    </div>`;
+        dom.innerHTML += html;
+        scrollToBottom(containerDom);
+    }
+
+    // 滑动到底部
+    function scrollToBottom(dom) {
+        scrollTo(0, document.body.scrollHeight);
+        dom.scrollTop = dom.scrollHeight;
+    }
+
+    // 获取当前时间
+    function getNow() {
+        let d = new Date();
+        return d.getFullYear() + "-" + ('0' + (d.getMonth() + 1)).slice(-2) + "-" + ('0' + d.getDate()).slice(-2) + " " + ('0' + d.getHours()).slice(-2) + ":" + ('0' + d.getMinutes()).slice(-2) + ":" + ('0' + d.getSeconds()).slice(-2);
+    }
+
+    /**
+     * 用es6 Set来去重
+     * 注意：例如数组中同时包含 1 和 '1' 不是相同类型，所以这两个值都会被保留
+     *
+     * 向 Set 加入值的时候，不会发生类型转换，所以5和"5"是两个不同的值。
+     * Set 内部判断两个值是否不同，使用的算法叫做“Same-value-zero equality”，它类似于精确相等运算符（===）
+     *
+     * unit test
+     * let arr = [1, 2, '1', 0, false, undefined, 1, 1, '1', 'a', {'a': 'b'}, {'a': 'b'}];
+     * unique(arr);
+     * 输出      [1, 2, '1', 0, false, undefined, 'a', {'a': 'b'}, {'a': 'b'}]
+     *
+     * @param array
+     * @returns {any[]}
+     */
+    function unique(array) {
+        return Array.from(new Set(array));
+    }
+
+    /**
+     * 数组分组
+     * @param array
+     * @param numberOfChunks
+     * @returns {[]}
+     */
+    function chunkArray(array, numberOfChunks) {
+        if (numberOfChunks > array.length) {
+            throw new Error('Number of chunks cannot be greater than the array length.');
+        }
+
+        const chunkSize = Math.floor(array.length / numberOfChunks);
+        const remainder = array.length % numberOfChunks;
+
+        const result = [];
+        let currentIndex = 0;
+
+        for (let i = 0; i < numberOfChunks; i++) {
+            const size = i < remainder ? chunkSize + 1 : chunkSize;
+            result.push(array.slice(currentIndex, currentIndex + size));
+            currentIndex += size;
+        }
+
+        return result;
+    }
+
+    // toast
+    function showToast(message, duration) {
+        const toastElement = document.getElementById('toast');
+
+        toastElement.textContent = message;
+        toastElement.style.display = 'block';
+
+        setTimeout(function () {
+            toastElement.style.display = 'none';
+        }, duration);
+    }
+</script>
+</body>
+</html>
